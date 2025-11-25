@@ -1,11 +1,23 @@
+import os
+# Set environment variables BEFORE importing tensorflow to avoid XLA/CUDA issues
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Force CPU execution
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Reduce TensorFlow logging
+
 import joblib
 import numpy as np
 import tensorflow as tf  # pylint: ignore-module
 import copy
-import os
 import functools
 import collections
 import multiprocessing
+
+# TensorFlow 2.x compatibility
+if hasattr(tf, '__version__') and int(tf.__version__.split('.')[0]) >= 2:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+    print(f"Using TensorFlow {tf.__version__} with v1 compatibility mode (CPU only)")
+else:
+    print(f"Using TensorFlow {tf.__version__} (CPU only)")
 
 def switch(condition, then_expression, else_expression):
     """Switches between two operations depending on a scalar value (int or bool).
@@ -64,7 +76,8 @@ def make_session(config=None, num_cpu=None, make_default=False, graph=None):
         config = tf.ConfigProto(
             allow_soft_placement=True,
             inter_op_parallelism_threads=num_cpu,
-            intra_op_parallelism_threads=num_cpu)
+            intra_op_parallelism_threads=num_cpu,
+            device_count={'GPU': 0})  # Disable GPU
         config.gpu_options.allow_growth = True
 
     if make_default:
@@ -179,7 +192,10 @@ def function(inputs, outputs, updates=None, givens=None):
 class _Function(object):
     def __init__(self, inputs, outputs, updates, givens):
         for inpt in inputs:
-            if not hasattr(inpt, 'make_feed_dict') and not (type(inpt) is tf.Tensor and len(inpt.op.inputs) == 0):
+            # TF2 compatibility: Check for both tf.Tensor and EagerTensor types, and also check if it's a placeholder
+            is_tensor = isinstance(inpt, (tf.Tensor, tf.Variable)) or (hasattr(tf, 'EagerTensor') and isinstance(inpt, tf.EagerTensor))
+            is_placeholder_or_constant = is_tensor and (len(inpt.op.inputs) == 0 if hasattr(inpt, 'op') else True)
+            if not hasattr(inpt, 'make_feed_dict') and not is_placeholder_or_constant:
                 assert False, "inputs should all be placeholders, constants, or have a make_feed_dict method"
         self.inputs = inputs
         updates = updates or []

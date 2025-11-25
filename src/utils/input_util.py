@@ -1,4 +1,8 @@
 import tensorflow as tf
+# TensorFlow 2.x compatibility
+if hasattr(tf, '__version__') and int(tf.__version__.split('.')[0]) >= 2:
+    import tensorflow.compat.v1 as tf
+    
 from gym.spaces import Discrete, Box
 
 def observation_placeholder(ob_space, batch_size=None, name='Ob'):

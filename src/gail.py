@@ -6,6 +6,11 @@ import logger
 import argparse
 
 import tensorflow as tf
+# TensorFlow 2.x compatibility
+if hasattr(tf, '__version__') and int(tf.__version__.split('.')[0]) >= 2:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+    
 import utils.tf_util as U
 import numpy as np
 

@@ -10,6 +10,10 @@ from mpi4py import MPI
 import utils.tf_util as U
 
 import tensorflow as tf
+# TensorFlow 2.x compatibility
+if hasattr(tf, '__version__') and int(tf.__version__.split('.')[0]) >= 2:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
 
 def dense(x, size, name, weight_init=None, bias_init=0, weight_loss_dict=None, reuse=None):
     with tf.variable_scope(name, reuse=reuse):
@@ -138,6 +142,9 @@ def set_global_seeds(i):
     myseed = i  + 1000 * rank if i is not None else None
     try:
         import tensorflow as tf
+        # TensorFlow 2.x compatibility
+        if hasattr(tf, '__version__') and int(tf.__version__.split('.')[0]) >= 2:
+            import tensorflow.compat.v1 as tf
         tf.set_random_seed(myseed)
     except ImportError:
         pass

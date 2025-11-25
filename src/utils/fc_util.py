@@ -1,6 +1,10 @@
 import os
 import numpy as np
 import tensorflow as tf
+# TensorFlow 2.x compatibility
+if hasattr(tf, '__version__') and int(tf.__version__.split('.')[0]) >= 2:
+    import tensorflow.compat.v1 as tf
+    
 from collections import deque
 
 def ortho_init(scale=1.0):

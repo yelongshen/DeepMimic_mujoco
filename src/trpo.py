@@ -6,6 +6,11 @@ import logger
 import argparse
 
 import tensorflow as tf
+# TensorFlow 2.x compatibility
+if hasattr(tf, '__version__') and int(tf.__version__.split('.')[0]) >= 2:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+    
 import utils.tf_util as U
 import numpy as np
 
@@ -362,39 +367,87 @@ def runner(env, policy_func, load_model_path, timesteps_per_batch, number_trajs,
     ac_space = env.action_space
     pi = policy_func("pi", ob_space, ac_space, reuse=reuse)
     U.initialize()
+    
     # Prepare for rollouts
     # ----------------------------------------
+    print(f"Loading model from: {load_model_path}")
     U.load_state(load_model_path)
+    print("Model loaded successfully!")
+    
+    # Test the policy to ensure it's working
+    test_obs = env.reset()
+    test_obs = env.reset_model_init()
+    test_ac, test_vpred = pi.act(stochastic_policy, test_obs)
+    print(f"Policy test - Action shape: {test_ac.shape}, Value pred: {test_vpred:.4f}")
+
+    # Setup video recording
+    from VideoSaver import VideoSaver
+    import os
+    from datetime import datetime
+    
+    # Create render directory if it doesn't exist
+    render_dir = './render'
+    os.makedirs(render_dir, exist_ok=True)
+    
+    # Create video saver with timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    video_path = os.path.join(render_dir, f'eval_{Config.motion}_{timestamp}.avi')
+    video_saver = VideoSaver(video_path, fps=30)
+    print(f"Recording video to: {video_path}")
+    print(f"Evaluating {number_trajs} trajectories (max {timesteps_per_batch} steps each)...")
 
     obs_list = []
     acs_list = []
     len_list = []
     ret_list = []
     from tqdm import tqdm
-    for _ in tqdm(range(number_trajs)):
-        traj = traj_1_generator(pi, env, timesteps_per_batch, stochastic=stochastic_policy)
+    for traj_idx in tqdm(range(number_trajs), desc="Evaluating"):
+        traj = traj_1_generator(pi, env, timesteps_per_batch, stochastic=stochastic_policy, 
+                                video_saver=video_saver)
         obs, acs, ep_len, ep_ret = traj['ob'], traj['ac'], traj['ep_len'], traj['ep_ret']
         obs_list.append(obs)
         acs_list.append(acs)
         len_list.append(ep_len)
         ret_list.append(ep_ret)
+        
+        # Print per-trajectory statistics
+        if traj_idx < 3 or traj_idx == number_trajs - 1:  # Print first 3 and last
+            print(f"  Trajectory {traj_idx+1}: length={ep_len}, return={ep_ret:.4f}")
+    
+    # Save and close video
+    video_saver.save()
+    print(f"\n{'='*60}")
+    print(f"Video saved to: {video_path}")
+    print(f"{'='*60}")
+    
     if stochastic_policy:
-        print('stochastic policy:')
+        print('\n🎲 Evaluation with STOCHASTIC policy:')
     else:
-        print('deterministic policy:')
+        print('\n🎯 Evaluation with DETERMINISTIC policy:')
+    
     if save:
         filename = load_model_path.split('/')[-1] + '.' + env.spec.id
         np.savez(filename, obs=np.array(obs_list), acs=np.array(acs_list),
                  lens=np.array(len_list), rets=np.array(ret_list))
+        print(f"Saved trajectories to: {filename}")
+    
     avg_len = sum(len_list)/len(len_list)
     avg_ret = sum(ret_list)/len(ret_list)
-    print("Average length:", avg_len)
-    print("Average return:", avg_ret)
+    std_len = np.std(len_list)
+    std_ret = np.std(ret_list)
+    
+    print(f"\n📊 RESULTS:")
+    print(f"  Average episode length: {avg_len:.2f} ± {std_len:.2f}")
+    print(f"  Average return:         {avg_ret:.4f} ± {std_ret:.4f}")
+    print(f"  Min return:             {min(ret_list):.4f}")
+    print(f"  Max return:             {max(ret_list):.4f}")
+    print(f"{'='*60}\n")
+    
     return avg_len, avg_ret
 
 
 # Sample one trajectory (until trajectory end)
-def traj_1_generator(pi, env, horizon, stochastic):
+def traj_1_generator(pi, env, horizon, stochastic, video_saver=None):
 
     t = 0
     ac = env.action_space.sample()  # not used, just so we have the datatype
@@ -418,7 +471,12 @@ def traj_1_generator(pi, env, horizon, stochastic):
         acs.append(ac)
 
         ob, rew, new, _ = env.step(ac)
-        env.render()
+        
+        # Render and save frame to video
+        frame = env.render(mode='rgb_array')
+        if video_saver is not None and frame is not None:
+            video_saver.add_frame(frame)
+        
         rews.append(rew)
 
         cur_ep_ret += rew
@@ -447,6 +505,9 @@ def main(args):
     task_name = get_task_short_name(args)
 
     def policy_fn(name, ob_space, ac_space, reuse=False):
+        print('ob_space', ob_space)
+        print('ac_space', ac_space)
+        
         return MlpPolicy(name=name, ob_space=ob_space, ac_space=ac_space,
                                     reuse=reuse, hid_size=args.policy_hidden_size, num_hid_layers=2)
 
@@ -469,20 +530,28 @@ def main(args):
         train(env,
               args.seed,
               policy_fn,
-              args.g_step,
-              args.policy_entcoeff,
+              args.g_step, # number of steps to train policy in each epoch
+              args.policy_entcoeff, # entropy coefficiency of policy
               args.pretrained_weight_path,
-              args.num_timesteps,
+              args.num_timesteps, # number of timesteps per episode
               args.save_per_iter,
               args.checkpoint_dir,
               args.log_dir,
               task_name)
     elif args.task == 'evaluate':
+        print(f"\n{'='*60}")
+        print(f"EVALUATION MODE")
+        print(f"{'='*60}")
+        print(f"Loading checkpoint: {args.load_model_path}")
+        print(f"Motion: {Config.motion}")
+        print(f"Stochastic policy: {args.stochastic_policy}")
+        print(f"{'='*60}\n")
+        
         runner(env,
                policy_fn,
                args.load_model_path,
-               timesteps_per_batch=1024,
-               number_trajs=100,
+               timesteps_per_batch=1024,  # Increased for longer episodes
+               number_trajs=2,  # Increased from 2 to 10 for better statistics
                stochastic_policy=args.stochastic_policy,
                save=args.save_sample)
     else:

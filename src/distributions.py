@@ -1,4 +1,9 @@
 import tensorflow as tf
+# TensorFlow 2.x compatibility
+if hasattr(tf, '__version__') and int(tf.__version__.split('.')[0]) >= 2:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+    
 import numpy as np
 from utils import tf_util as U
 from utils.fc_util import fc
@@ -269,7 +274,13 @@ class BernoulliPd(Pd):
         return cls(flat)
 
 def make_pdtype(ac_space):
-    from gym import spaces
+    # Try gymnasium first, fall back to gym
+    try:
+        import gymnasium as gym
+        spaces = gym.spaces
+    except ImportError:
+        from gym import spaces
+    
     if isinstance(ac_space, spaces.Box):
         assert len(ac_space.shape) == 1
         return DiagGaussianPdType(ac_space.shape[0])

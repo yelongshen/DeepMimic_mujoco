@@ -1,9 +1,9 @@
 import numpy as np
 from pyquaternion import Quaternion
 
-from mujoco.mocap_util import calc_angular_vel_from_quaternion, calc_diff_from_quaternion
-from mujoco.mocap_util import BODY_JOINTS, BODY_JOINTS_IN_DP_ORDER, JOINT_WEIGHT
-from mujoco.mocap_util import DOF_DEF, PARAMS_KP_KD, PARAMS_KP_KD, BODY_DEFS
+from .mocap_util import calc_angular_vel_from_quaternion, calc_diff_from_quaternion
+from .mocap_util import BODY_JOINTS, BODY_JOINTS_IN_DP_ORDER, JOINT_WEIGHT
+from .mocap_util import DOF_DEF, PARAMS_KP_KD, PARAMS_KP_KD, BODY_DEFS
 
 class MujocoInterface(object):
     def __init__(self):

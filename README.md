@@ -1,6 +1,8 @@
 # Intro
 > Status: Archive (code is provided as-is)
 
+> **✨ Update (2025):** This project has been migrated to use the modern `mujoco` package, enabling **Python 3.12+ support**! See [QUICKSTART.md](QUICKSTART.md) for installation instructions.
+
 Mujoco version of [DeepMimic](https://xbpeng.github.io/projects/DeepMimic/index.html): 
 * No C++ codes --> pure python
 * No bullet engine --> Mujoco engine
@@ -21,18 +23,54 @@ Examples:
 <img src="docs/standup.gif" alt="standup" width="400px"/>
 
 # Install
-* Mujoco: Download mujoco200 and put it in the ~/.mujoco/ folder (mjkey.txt should also be in this folder). Then install mujoco-py:
-``` bash 
-python3 -m pip install mujoco-py
+
+**Note:** This project has been migrated to:
+1. Use the modern `mujoco` Python package (officially maintained by DeepMind) which supports Python 3.8+ including Python 3.12
+2. Use `gymnasium` instead of deprecated `gym` package
+
+📚 **Documentation:**
+- [QUICKSTART.md](QUICKSTART.md) - Quick installation and getting started guide
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Common issues and solutions
+- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Detailed migration information  
+- [MIGRATION_SUMMARY.md](MIGRATION_SUMMARY.md) - Summary of changes made
+
+## Quick Install
+
+### Option 1: Using the install script (Linux/macOS)
+``` bash
+chmod +x install.sh
+./install.sh
+```
+
+### Option 2: Using requirements.txt
+``` bash
+pip install -r requirements.txt
+```
+
+### Option 3: Manual installation
+
+* Mujoco: Install the modern MuJoCo Python bindings:
+``` bash
+# Install the modern mujoco package (includes MuJoCo binaries)
+python3 -m pip install mujoco
+
+# Install GLFW for visualization (required by the compatibility wrapper)
+python3 -m pip install glfw
 ```
 
 * python3 modules: python dependencies
 ``` bash
-python3 -m pip installl gym
-python3 -m pip install tensorflow-gpu
+python3 -m pip install gymnasium
+python3 -m pip install tensorflow>=2.10  # TensorFlow 2.x with TF1 compatibility
 python3 -m pip install pyquaternion
 python3 -m pip install joblib
+python3 -m pip install numpy
 ```
+
+**Note:** 
+- We use `gymnasium` (the maintained replacement for `gym`)
+- TensorFlow 2.x is supported via TF1 compatibility mode (see [TENSORFLOW_COMPATIBILITY.md](TENSORFLOW_COMPATIBILITY.md))
+- For GPU support: `pip install tensorflow[and-cuda]>=2.10`
 
 * MPI & MPI4PY: mpi for parrellel training
 ``` bash 

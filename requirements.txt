@@ -1,0 +1,28 @@
+# Core MuJoCo dependencies (modern package)
+mujoco>=3.0.0
+glfw>=2.0.0
+
+# Numerical computing
+numpy>=1.21.0
+
+# Gymnasium environment (maintained replacement for Gym)
+gymnasium>=0.29.0
+
+# Quaternion operations
+pyquaternion>=1.0.0
+
+# Job management
+joblib>=1.0.0
+
+# Deep learning (choose one based on your hardware)
+# For GPU:
+tensorflow>=2.10.0
+# For CPU only:
+# tensorflow-cpu>=2.10.0
+
+# Parallel training with MPI
+# Note: Requires system MPI installation first
+# mpi4py>=3.1.0
+
+# Optional: for video recording
+# opencv-python>=4.5.0

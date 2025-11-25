@@ -6,8 +6,8 @@ import copy
 import numpy as np
 from os import getcwd
 from pyquaternion import Quaternion
-from mujoco.mocap_util import align_position, align_rotation
-from mujoco.mocap_util import BODY_JOINTS, BODY_JOINTS_IN_DP_ORDER, DOF_DEF, BODY_DEFS
+from .mocap_util import align_position, align_rotation
+from .mocap_util import BODY_JOINTS, BODY_JOINTS_IN_DP_ORDER, DOF_DEF, BODY_DEFS
 
 def quat2euler(elements):
     q0, q1, q2, q3 = elements[0], elements[1], elements[2], elements[3]
@@ -152,7 +152,8 @@ class MocapDM(object):
             self.data_angle.append(tmp_angle)
 
     def play(self, mocap_filepath):
-        from mujoco_py import load_model_from_xml, MjSim, MjViewer
+        # Updated to use modern mujoco package with compatibility wrapper
+        from mujoco_py_compat import load_model_from_xml, MjSim, MjViewer
 
         curr_path = getcwd()
         xmlpath = '/mujoco/humanoid_deepmimic/envs/asset/dp_env_v1.xml'

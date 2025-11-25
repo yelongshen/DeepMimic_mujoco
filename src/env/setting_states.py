@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import os
-from mujoco_py import load_model_from_xml, MjSim, MjViewer
+# Updated to use modern mujoco package with compatibility wrapper
+from mujoco_py_compat import load_model_from_xml, MjSim, MjViewer
 import json
 import copy
 import numpy as np

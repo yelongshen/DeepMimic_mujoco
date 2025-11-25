@@ -3,6 +3,11 @@ This code is highly based on https://github.com/carpedm20/deep-rl-tensorflow/blo
 '''
 
 import tensorflow as tf
+# TensorFlow 2.x compatibility
+if hasattr(tf, '__version__') and int(tf.__version__.split('.')[0]) >= 2:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
+    
 import numpy as np
 
 import utils.tf_util as U

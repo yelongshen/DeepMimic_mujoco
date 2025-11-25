@@ -1,5 +1,8 @@
 from os import getcwd
-from mujoco_py import load_model_from_xml, MjSim, MjViewer
+#!/usr/bin/env python3
+# Updated to use modern mujoco package with compatibility wrapper
+from mujoco_py_compat import load_model_from_xml, MjSim, MjViewer
+
 
 from config import Config
 

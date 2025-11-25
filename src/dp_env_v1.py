@@ -4,10 +4,11 @@ import math
 import random
 from os import getcwd
 
-from mujoco.mocap_v1 import MocapDM
-from mujoco.mujoco_interface import MujocoInterface
-from mujoco.mocap_util import JOINT_WEIGHT
-from mujoco_py import load_model_from_xml, MjSim, MjViewer
+from deepmimic_mujoco.mocap_v1 import MocapDM
+from deepmimic_mujoco.mujoco_interface import MujocoInterface
+from deepmimic_mujoco.mocap_util import JOINT_WEIGHT
+# Updated to use modern mujoco package with compatibility wrapper
+from mujoco_py_compat import load_model_from_xml, MjSim, MjViewer
 
 from gym.envs.mujoco import mujoco_env
 from gym import utils
